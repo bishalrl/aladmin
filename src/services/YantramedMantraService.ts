@@ -11,6 +11,9 @@ export class YantramedMantraService {
     const project = await projectService.getBySlug(PROJECT_SLUG);
     const items = await prisma.yantramedMantra.findMany({
       where: { projectId: project.id, deletedAt: null },
+      include: {
+        yantra: { select: { id: true, name: true, slug: true, focus: true } },
+      },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });
     return items.map((m) => ({
@@ -35,6 +38,21 @@ export class YantramedMantraService {
     ip?: string,
   ) {
     const project = await projectService.getBySlug(PROJECT_SLUG);
+
+    if (data.yantraId) {
+      const yantra = await prisma.yantramedYantra.findFirst({
+        where: {
+          id: data.yantraId,
+          projectId: project.id,
+          deletedAt: null,
+          isActive: true,
+        },
+      });
+      if (!yantra) {
+        throw new AppError("Yantra not found", "YANTRA_NOT_FOUND", 404);
+      }
+    }
+
     const stored = await storageService.upload(
       data.audio,
       "yantramed/mantras",
@@ -89,6 +107,8 @@ export class YantramedMantraService {
       title?: string;
       description?: string;
       category?: string;
+      yantraId?: string | null;
+      mantraHint?: string;
       sortOrder?: number;
       isActive?: boolean;
       duration?: number;
@@ -102,6 +122,19 @@ export class YantramedMantraService {
     });
     if (!existing) {
       throw new AppError("Mantra not found", "MANTRA_NOT_FOUND", 404);
+    }
+
+    if (data.yantraId) {
+      const yantra = await prisma.yantramedYantra.findFirst({
+        where: {
+          id: data.yantraId,
+          projectId: existing.projectId,
+          deletedAt: null,
+        },
+      });
+      if (!yantra) {
+        throw new AppError("Yantra not found", "YANTRA_NOT_FOUND", 404);
+      }
     }
 
     let audioPath = existing.audioPath;
@@ -125,11 +158,17 @@ export class YantramedMantraService {
       data: {
         title: data.title ?? existing.title,
         description:
-          data.description === undefined
-            ? existing.description
-            : data.description || null,
+          data.description !== undefined
+            ? data.description || null
+            : existing.description,
         category:
-          data.category === undefined ? existing.category : data.category || null,
+          data.category !== undefined ? data.category || null : existing.category,
+        mantraHint:
+          data.mantraHint !== undefined
+            ? data.mantraHint || null
+            : existing.mantraHint,
+        yantraId:
+          data.yantraId !== undefined ? data.yantraId || null : existing.yantraId,
         sortOrder: data.sortOrder ?? existing.sortOrder,
         isActive: data.isActive ?? existing.isActive,
         duration: data.duration ?? existing.duration,

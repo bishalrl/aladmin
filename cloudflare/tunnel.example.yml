@@ -1,11 +1,11 @@
-# Cloudflare Tunnel — public hostname → local Next.js on 3100
+# Cloudflare Tunnel — public hostname → local Next.js on 3200
 # Prefer Zero Trust dashboard config with a connector token.
 # If you use a local config file instead, copy to ~/.cloudflared/config.yml
 #
 # Dashboard (recommended):
 #   Tunnel: adminpanel
 #   Public hostname: aladmin.sikaupaisa.com
-#   Service: http://localhost:3100
+#   Service: http://localhost:3200
 #
 # Then on this Windows machine:
 #   winget install Cloudflare.cloudflared
@@ -14,12 +14,12 @@
 #
 # App (keep running):
 #   npm run build
-#   npm run start:3100
+#   npm run start:3200
 
 tunnel: adminpanel
 credentials-file: C:\Users\REPLACE\.cloudflared\REPLACE.json
 
 ingress:
   - hostname: aladmin.sikaupaisa.com
-    service: http://localhost:3100
+    service: http://localhost:3200
   - service: http_status:404

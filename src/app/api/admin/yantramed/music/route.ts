@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       sortOrder: form.get("sortOrder") || 0,
       isActive: form.get("isActive") !== "false",
       duration: form.get("duration") || undefined,
-      dayNumber: form.get("dayNumber") || null,
+      dayNumber: form.get("dayNumber") || undefined,
     });
     if (!parsed.success) {
       return fail("Invalid music data", "VALIDATION_ERROR", 400);

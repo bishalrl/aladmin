@@ -11,7 +11,7 @@ export class YantramedMusicService {
     const project = await projectService.getBySlug(PROJECT_SLUG);
     const items = await prisma.yantramedMusic.findMany({
       where: { projectId: project.id, deletedAt: null },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ dayNumber: "asc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     });
     return items.map((m) => ({
       ...m,
@@ -26,7 +26,7 @@ export class YantramedMusicService {
       sortOrder?: number;
       isActive?: boolean;
       duration?: number;
-      dayNumber?: number | null;
+      dayNumber: number;
       audio: File;
     },
     adminId?: string,
@@ -56,7 +56,7 @@ export class YantramedMusicService {
         projectId: project.id,
         title: data.title,
         description: data.description || null,
-        dayNumber: data.dayNumber ?? null,
+        dayNumber: data.dayNumber,
         audioPath: stored.relativePath,
         duration: data.duration ?? null,
         fileSize: stored.fileSize,
@@ -64,6 +64,16 @@ export class YantramedMusicService {
         sortOrder: data.sortOrder ?? 0,
         isActive: data.isActive ?? true,
       },
+    });
+
+    // Bind this track to the matching course day so day APIs resolve it
+    await prisma.yantramedCourseDay.updateMany({
+      where: {
+        projectId: project.id,
+        dayNumber: data.dayNumber,
+        deletedAt: null,
+      },
+      data: { musicId: music.id },
     });
 
     await auditLogService.log({
@@ -87,6 +97,7 @@ export class YantramedMusicService {
       sortOrder?: number;
       isActive?: boolean;
       duration?: number;
+      dayNumber?: number | null;
       audio?: File | null;
     },
     adminId?: string,
@@ -120,6 +131,8 @@ export class YantramedMusicService {
           data.description === undefined
             ? existing.description
             : data.description || null,
+        dayNumber:
+          data.dayNumber !== undefined ? data.dayNumber : existing.dayNumber,
         sortOrder: data.sortOrder ?? existing.sortOrder,
         isActive: data.isActive ?? existing.isActive,
         duration: data.duration ?? existing.duration,
@@ -128,6 +141,28 @@ export class YantramedMusicService {
         mimeType,
       },
     });
+
+    if (data.dayNumber != null && data.dayNumber !== existing.dayNumber) {
+      if (existing.dayNumber != null) {
+        await prisma.yantramedCourseDay.updateMany({
+          where: {
+            projectId: existing.projectId,
+            dayNumber: existing.dayNumber,
+            musicId: id,
+            deletedAt: null,
+          },
+          data: { musicId: null },
+        });
+      }
+      await prisma.yantramedCourseDay.updateMany({
+        where: {
+          projectId: existing.projectId,
+          dayNumber: data.dayNumber,
+          deletedAt: null,
+        },
+        data: { musicId: id },
+      });
+    }
 
     await auditLogService.log({
       adminId,

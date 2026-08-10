@@ -29,7 +29,8 @@ export const musicSchema = z.object({
   sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().optional(),
   duration: z.coerce.number().int().min(0).optional(),
-  dayNumber: z.coerce.number().int().min(1).max(30).optional().nullable(),
+  /** Course day 1–30 — required on create; optional on PATCH via .partial() */
+  dayNumber: z.coerce.number().int().min(1).max(30),
 });
 
 export const mantraSchema = z.object({
@@ -37,7 +38,8 @@ export const mantraSchema = z.object({
   description: z.string().max(2000).optional(),
   category: z.string().max(100).optional(),
   mantraHint: z.string().max(500).optional(),
-  yantraId: z.string().optional().nullable(),
+  /** One of the 6 course yantras — required on create; optional on PATCH via .partial() */
+  yantraId: z.string().min(1),
   sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().optional(),
   duration: z.coerce.number().int().min(0).optional(),

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       description: form.get("description") || undefined,
       category: form.get("category") || undefined,
       mantraHint: form.get("mantraHint") || undefined,
-      yantraId: form.get("yantraId") || null,
+      yantraId: form.get("yantraId") || undefined,
       sortOrder: form.get("sortOrder") || 0,
       isActive: form.get("isActive") !== "false",
       duration: form.get("duration") || undefined,

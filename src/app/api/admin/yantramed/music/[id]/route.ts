@@ -21,6 +21,7 @@ export async function PATCH(
       title: form.get("title") || undefined,
       description: form.get("description") ?? undefined,
       sortOrder: form.get("sortOrder") || undefined,
+      dayNumber: form.get("dayNumber") || undefined,
       isActive:
         form.get("isActive") === null
           ? undefined

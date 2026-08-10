@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  VIEWER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum DeletionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String    @map("password_hash")
+  role         AdminRole @default(ADMIN)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  auditLogs               AuditLog[]
+  reviewedDeletionRequests AccountDeletionRequest[] @relation("DeletionReviewer")
+
+  @@map("admins")
+}
+
+model Project {
+  id                 String        @id @default(cuid())
+  name               String
+  slug               String        @unique
+  firebaseProjectId  String?       @map("firebase_project_id")
+  type               String        @default("mobile")
+  status             ProjectStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  deletedAt          DateTime?     @map("deleted_at")
+
+  brands                   Brand[]
+  bannerAds                BannerAd[]
+  mediaFiles               MediaFile[]
+  yantramedMusic           YantramedMusic[]
+  yantramedMantras         YantramedMantra[]
+  yantramedYantras         YantramedYantra[]
+  yantramedCourseDays      YantramedCourseDay[]
+  apiKeys                  ApiKey[]
+  auditLogs                AuditLog[]
+  apiRequestLogs           ApiRequestLog[]
+  accountDeletionRequests  AccountDeletionRequest[]
+
+  @@map("projects")
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  projectId String    @map("project_id")
+  name      String
+  logoPath  String?   @map("logo_path")
+  website   String?
+  contact   String?
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  project   Project    @relation(fields: [projectId], references: [id])
+  bannerAds BannerAd[]
+
+  @@index([projectId])
+  @@map("brands")
+}
+
+enum BannerMediaType {
+  IMAGE
+  VIDEO
+}
+
+model BannerAd {
+  id        String          @id @default(cuid())
+  projectId String          @map("project_id")
+  brandId   String          @map("brand_id")
+  title     String
+  /// File on server disk (image or video)
+  mediaPath String          @map("media_path")
+  mediaType BannerMediaType @default(IMAGE) @map("media_type")
+  mimeType  String?         @map("mime_type")
+  /// Optional destination link from the brand
+  clickUrl  String?         @map("click_url")
+  startDate DateTime        @map("start_date")
+  endDate   DateTime        @map("end_date")
+  priority  Int             @default(0)
+  isActive  Boolean         @default(true) @map("is_active")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  deletedAt DateTime?       @map("deleted_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+  brand   Brand   @relation(fields: [brandId], references: [id])
+
+  @@index([projectId, isActive, priority])
+  @@index([startDate, endDate])
+  @@map("banner_ads")
+}
+
+model MediaFile {
+  id           String    @id @default(cuid())
+  projectId    String?   @map("project_id")
+  category     String
+  originalName String    @map("original_name")
+  storedName   String    @map("stored_name")
+  relativePath String    @map("relative_path")
+  mimeType     String    @map("mime_type")
+  fileSize     Int       @map("file_size")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([category])
+  @@index([projectId])
+  @@map("media_files")
+}
+
+model YantramedMusic {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  title       String
+  description String?
+  /// Optional: bind track to a course day (1–30). Music varies by day.
+  dayNumber   Int?      @map("day_number")
+  audioPath   String    @map("audio_path")
+  duration    Int?
+  fileSize    Int       @map("file_size")
+  mimeType    String    @map("mime_type")
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  project    Project             @relation(fields: [projectId], references: [id])
+  courseDays YantramedCourseDay[]
+
+  @@index([projectId, isActive, sortOrder])
+  @@index([projectId, dayNumber])
+  @@map("yantramed_music")
+}
+
+model YantramedYantra {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  name        String
+  slug        String
+  focus       String
+  sourceText  String    @map("source_text")
+  /// Order in home grid / course cycle (0–5 for the six). Null = not in home/course (Lakshmi, Custom).
+  cycleIndex  Int?      @map("cycle_index")
+  showOnHome  Boolean   @default(false) @map("show_on_home")
+  inCourse    Boolean   @default(false) @map("in_course")
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  project    Project              @relation(fields: [projectId], references: [id])
+  mantras    YantramedMantra[]
+  courseDays YantramedCourseDay[]
+
+  @@unique([projectId, slug])
+  @@index([projectId, showOnHome, sortOrder])
+  @@map("yantramed_yantras")
+}
+
+model YantramedMantra {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  yantraId    String?   @map("yantra_id")
+  title       String
+  description String?
+  /// Short hint shown on the day's meditation screen
+  mantraHint  String?   @map("mantra_hint")
+  category    String?
+  audioPath   String    @map("audio_path")
+  duration    Int?
+  fileSize    Int       @map("file_size")
+  mimeType    String    @map("mime_type")
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  project    Project              @relation(fields: [projectId], references: [id])
+  yantra     YantramedYantra?     @relation(fields: [yantraId], references: [id])
+  courseDays YantramedCourseDay[]
+
+  @@index([projectId, isActive, sortOrder])
+  @@index([yantraId])
+  @@map("yantramed_mantras")
+}
+
+/// 30-day sequential course. Day N unlocks only after N-1 is finished (enforced in app).
+model YantramedCourseDay {
+  id               String    @id @default(cuid())
+  projectId        String    @map("project_id")
+  dayNumber        Int       @map("day_number")
+  yantraId         String    @map("yantra_id")
+  durationMinutes  Int       @map("duration_minutes")
+  focus            String
+  mantraHint       String    @map("mantra_hint")
+  musicId          String?   @map("music_id")
+  mantraId         String?   @map("mantra_id")
+  /// Meditation must run full timer; no early complete
+  allowEarlyComplete Boolean @default(false) @map("allow_early_complete")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  project Project          @relation(fields: [projectId], references: [id])
+  yantra  YantramedYantra  @relation(fields: [yantraId], references: [id])
+  music   YantramedMusic?  @relation(fields: [musicId], references: [id])
+  mantra  YantramedMantra? @relation(fields: [mantraId], references: [id])
+
+  @@unique([projectId, dayNumber])
+  @@index([projectId, isActive])
+  @@map("yantramed_course_days")
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  projectId  String?   @map("project_id")
+  name       String
+  keyHash    String    @map("key_hash")
+  keyPrefix  String    @map("key_prefix")
+  isActive   Boolean   @default(true) @map("is_active")
+  lastUsedAt DateTime? @map("last_used_at")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([keyPrefix])
+  @@index([projectId])
+  @@map("api_keys")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  adminId      String?  @map("admin_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  projectId    String?  @map("project_id")
+  metadata     Json?
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin   Admin?   @relation(fields: [adminId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([adminId])
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiRequestLog {
+  id           String   @id @default(cuid())
+  projectId    String?  @map("project_id")
+  method       String
+  path         String
+  statusCode   Int      @map("status_code")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  responseMs   Int?     @map("response_ms")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("api_request_logs")
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model AccountDeletionRequest {
+  id              String                @id @default(cuid())
+  projectId       String                @map("project_id")
+  email           String
+  firebaseUid     String?               @map("firebase_uid")
+  reason          String?
+  status          DeletionRequestStatus @default(PENDING)
+  adminNotes      String?               @map("admin_notes")
+  reviewedById    String?               @map("reviewed_by_id")
+  reviewedAt      DateTime?             @map("reviewed_at")
+  completedAt     DateTime?             @map("completed_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  project    Project @relation(fields: [projectId], references: [id])
+  reviewedBy Admin?  @relation("DeletionReviewer", fields: [reviewedById], references: [id])
+
+  @@index([projectId, status])
+  @@index([email])
+  @@map("account_deletion_requests")
+}

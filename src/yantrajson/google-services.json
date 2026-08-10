@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "388575091803",
+    "project_id": "yantramed",
+    "storage_bucket": "yantramed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388575091803:android:b0bb97903c5e5ae2db737e",
+        "android_client_info": {
+          "package_name": "com.example.yantra"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "388575091803-gkl5vh026n1e1g9ph4lmmpp07e7aodut.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZsldG2X1MFNfQA7VUB9KN1B_JQtimMTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "388575091803-gkl5vh026n1e1g9ph4lmmpp07e7aodut.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

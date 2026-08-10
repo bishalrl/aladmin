@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "297522508584",
+    "project_id": "aarthik-cce43",
+    "storage_bucket": "aarthik-cce43.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:297522508584:android:b2aa32039f276ca06ad61d",
+        "android_client_info": {
+          "package_name": "com.aarthik.life_vault"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "297522508584-2s9d1q3omam61lfkp0qdb8j2mqbfdot4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarthik.life_vault",
+            "certificate_hash": "773d88983f2ee9cf3bc13a896edba8dc0e7bbdf1"
+          }
+        },
+        {
+          "client_id": "297522508584-a6ph0arnn4hdd4j0s6s5qeieopui0q0f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarthik.life_vault",
+            "certificate_hash": "aee45a3315cd17eda51f93c8dc4ade99e279b086"
+          }
+        },
+        {
+          "client_id": "297522508584-ccer348einoraoda3uc9upre6meecu3p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarthik.life_vault",
+            "certificate_hash": "80d8d6bcb6cf47d3ca5d31c9c84ca50584c0aa23"
+          }
+        },
+        {
+          "client_id": "297522508584-i3ltmpheg5t9e7061vol7atvg3crcbvf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarthik.life_vault",
+            "certificate_hash": "8dec3ceb4d1f89a6716efff6345a002dad42d7d7"
+          }
+        },
+        {
+          "client_id": "297522508584-vhku1bltdvrmlt66pv7o00eus2vncdhp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aarthik.life_vault",
+            "certificate_hash": "5b5f1347c8b772ad56dda56e4eda06bcc85f7830"
+          }
+        },
+        {
+          "client_id": "297522508584-tgc79kmkj43a7e0jpv0mvqk5hrrfch4m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_3KKCgAVmKcVHcwcgDm1y_LyWh7DfyXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "297522508584-tgc79kmkj43a7e0jpv0mvqk5hrrfch4m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "297522508584-1ri2tuavv4j6lcg9s61s5eemmcmdbnrt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.aarthik.lifeVault"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

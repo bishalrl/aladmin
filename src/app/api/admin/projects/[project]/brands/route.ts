@@ -31,9 +31,20 @@ export async function POST(
     );
     const { project } = await context.params;
     const form = await request.formData();
+    const rawWebsite = form.get("website");
+    const websiteStr =
+      typeof rawWebsite === "string" ? rawWebsite.trim() : "";
+    // brandSchema uses z.string().url(), which requires a protocol.
+    // UI often sends "sikaupaisa.com" (no https://), so normalize it.
+    const normalizedWebsite =
+      !websiteStr
+        ? ""
+        : /^https?:\/\//i.test(websiteStr)
+          ? websiteStr
+          : `https://${websiteStr}`;
     const parsed = brandSchema.safeParse({
       name: form.get("name"),
-      website: form.get("website") || "",
+      website: normalizedWebsite,
       contact: form.get("contact") || undefined,
       isActive: form.get("isActive") !== "false",
     });

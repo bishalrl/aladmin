@@ -4,6 +4,10 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 const PUBLIC_PATHS = [
   "/login",
   "/delete-account",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/refunds",
   "/api/v1",
   "/api/storage",
   "/api/admin/auth/login",
@@ -24,10 +28,6 @@ export async function middleware(request: NextRequest) {
     pathname.includes(".")
   ) {
     return NextResponse.next();
-  }
-
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   const needsAuth =

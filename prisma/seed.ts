@@ -139,6 +139,29 @@ async function main() {
     });
   }
 
+  await prisma.setting.upsert({
+    where: { key: "yantramed.pricing" },
+    update: {
+      value: {
+        amount: Number(process.env.YANTRAMED_SUBSCRIPTION_PRICE_USD ?? 12),
+        currency: process.env.YANTRAMED_SUBSCRIPTION_CURRENCY ?? "USD",
+        interval: process.env.YANTRAMED_SUBSCRIPTION_INTERVAL ?? "month",
+        display: `$${Number(process.env.YANTRAMED_SUBSCRIPTION_PRICE_USD ?? 12)}/month`,
+        product_id: process.env.YANTRAMED_SUBSCRIPTION_PRODUCT_ID ?? null,
+      },
+    },
+    create: {
+      key: "yantramed.pricing",
+      value: {
+        amount: 12,
+        currency: "USD",
+        interval: "month",
+        display: "$12/month",
+        product_id: null,
+      },
+    },
+  });
+
   console.log("Seed complete.");
   console.log(`Super admin: ${email}`);
   console.log("YantraMed: 6 home yantras + Lakshmi/Custom + 30 course days");

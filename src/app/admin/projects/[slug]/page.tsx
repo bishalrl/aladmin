@@ -110,7 +110,20 @@ export default function ProjectPage() {
   const apiHint =
     slug === "budgeting-sathi"
       ? "GET /api/v1/budgeting-sathi/banners"
-      : "GET /api/v1/yantramed/course/days/:day/mantra then .../music";
+      : "GET /api/v1/yantramed/app (pricing + URLs)";
+  const appBase =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://aladmin.sikaupaisa.com";
+  const ymPublicUrls =
+    slug === "yantramed"
+      ? [
+          { label: "Account deletion", href: `${appBase}/delete-account/yantramed` },
+          { label: "App config API", href: `${appBase}/api/v1/yantramed/app` },
+          { label: "Pricing API", href: `${appBase}/api/v1/yantramed/pricing` },
+          { label: "Course API", href: `${appBase}/api/v1/yantramed/course` },
+        ]
+      : [];
 
   return (
     <div>
@@ -150,6 +163,12 @@ export default function ProjectPage() {
                 <dt className="text-slate-500">Public API</dt>
                 <dd className="font-mono text-xs">{apiHint}</dd>
               </div>
+              {slug === "yantramed" ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-slate-500">Subscription</dt>
+                  <dd className="font-semibold text-teal-800">$12 / month</dd>
+                </div>
+              ) : null}
             </dl>
           ) : (
             <p className="text-sm text-slate-500">Loading project…</p>
@@ -187,6 +206,31 @@ export default function ProjectPage() {
           </Link>
         </Card>
       </div>
+
+      {ymPublicUrls.length > 0 ? (
+        <>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Public URLs (YantraMed)
+          </h2>
+          <Card className="mb-6">
+            <ul className="space-y-2 text-sm">
+              {ymPublicUrls.map((u) => (
+                <li key={u.label} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                  <span className="w-36 shrink-0 font-medium text-slate-700">{u.label}</span>
+                  <a
+                    href={u.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all font-mono text-xs text-teal-700 hover:underline"
+                  >
+                    {u.href}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </>
+      ) : null}
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
         Features

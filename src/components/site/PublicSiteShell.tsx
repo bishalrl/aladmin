@@ -3,6 +3,7 @@ import { YANTRAMED_SITE } from "@/lib/site/yantramedSite";
 
 const FOOTER_LINKS = [
   { href: "/pricing", label: "Pricing" },
+  { href: "/account/billing", label: "Manage billing" },
   { href: "/terms", label: "Terms of Service" },
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/refunds", label: "Refund Policy" },

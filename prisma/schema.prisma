@@ -66,6 +66,7 @@ model Project {
   auditLogs                AuditLog[]
   apiRequestLogs           ApiRequestLog[]
   accountDeletionRequests  AccountDeletionRequest[]
+  paddleCustomers          PaddleCustomer[]
 
   @@map("projects")
 }
@@ -337,4 +338,46 @@ model AccountDeletionRequest {
   @@index([projectId, status])
   @@index([email])
   @@map("account_deletion_requests")
+}
+
+/// Paddle Billing customer mirror (YantraMed subscriptions)
+model PaddleCustomer {
+  customerId String   @id @map("customer_id")
+  email      String
+  projectId  String?  @map("project_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  project       Project?             @relation(fields: [projectId], references: [id])
+  subscriptions PaddleSubscription[]
+
+  @@index([email])
+  @@map("paddle_customers")
+}
+
+model PaddleSubscription {
+  subscriptionId        String    @id @map("subscription_id")
+  customerId            String    @map("customer_id")
+  status                String
+  priceId               String    @map("price_id")
+  productId             String    @map("product_id")
+  scheduledChangeAction String?   @map("scheduled_change_action")
+  scheduledChangeAt     DateTime? @map("scheduled_change_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer PaddleCustomer @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([status])
+  @@map("paddle_subscriptions")
+}
+
+/// Idempotent webhook processing (Paddle event_id)
+model PaddleWebhookEvent {
+  eventId     String   @id @map("event_id")
+  eventType   String   @map("event_type")
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("paddle_webhook_events")
 }

@@ -5,6 +5,26 @@ function dataAsRecord(event: EventEntity): Record<string, unknown> {
   return (event.data ?? {}) as unknown as Record<string, unknown>;
 }
 
+function readCustomData(data: Record<string, unknown>): {
+  email?: string;
+  firebase_uid?: string;
+  tier?: string;
+} {
+  const raw = data.customData ?? data.custom_data;
+  if (!raw || typeof raw !== "object") return {};
+  const cd = raw as Record<string, unknown>;
+  return {
+    email: typeof cd.email === "string" ? cd.email : undefined,
+    firebase_uid:
+      typeof cd.firebase_uid === "string"
+        ? cd.firebase_uid
+        : typeof cd.firebaseUid === "string"
+          ? cd.firebaseUid
+          : undefined,
+    tier: typeof cd.tier === "string" ? cd.tier : undefined,
+  };
+}
+
 export async function dispatchPaddleEvent(event: EventEntity): Promise<void> {
   const eventId = event.eventId;
   const eventType = event.eventType;
@@ -19,6 +39,7 @@ export async function dispatchPaddleEvent(event: EventEntity): Promise<void> {
   }
 
   const data = dataAsRecord(event);
+  const custom = readCustomData(data);
 
   switch (eventType) {
     case "customer.created":
@@ -28,6 +49,7 @@ export async function dispatchPaddleEvent(event: EventEntity): Promise<void> {
         await paddleFulfillmentService.upsertCustomer({
           id: customer.id,
           email: customer.email ?? null,
+          firebaseUid: custom.firebase_uid,
         });
       }
       break;
@@ -51,17 +73,29 @@ export async function dispatchPaddleEvent(event: EventEntity): Promise<void> {
         await paddleFulfillmentService.upsertCustomer({
           id: customerId,
           email: customerEmail.email,
+          firebaseUid: custom.firebase_uid,
         });
       }
       break;
     }
     case "transaction.completed": {
-      const customData = data.customData as Record<string, string> | undefined;
       const customerId = data.customerId as string | undefined;
-      if (customerId && customData?.email) {
-        await paddleFulfillmentService.upsertCustomer({
-          id: customerId,
-          email: customData.email,
+      const transactionId = data.id as string | undefined;
+      const subscriptionId = data.subscriptionId as string | undefined;
+      const status = (data.status as string | undefined) ?? "completed";
+      const email =
+        custom.email ??
+        (data.customer as { email?: string } | undefined)?.email;
+
+      if (customerId && transactionId) {
+        await paddleFulfillmentService.recordTransactionPayment({
+          transactionId,
+          customerId,
+          subscriptionId: subscriptionId ?? null,
+          status,
+          email: email ?? null,
+          firebaseUid: custom.firebase_uid,
+          tier: custom.tier ?? null,
         });
       }
       break;

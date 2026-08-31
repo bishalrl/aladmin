@@ -17,6 +17,10 @@ export type YantramedAppInfo = {
   };
   pricing: YantramedPricing;
   urls: {
+    pricing: string;
+    checkout: string;
+    subscription_status: string;
+    billing_portal: string;
     account_deletion: string;
     course: string;
     course_day: string;
@@ -31,6 +35,13 @@ export type YantramedAppInfo = {
     step_2: string;
     step_3: string;
     step_4: string;
+  };
+  subscription_flow: {
+    step_1: string;
+    step_2: string;
+    step_3: string;
+    step_4: string;
+    step_5: string;
   };
 };
 
@@ -93,6 +104,10 @@ export class YantramedAppService {
       },
       pricing,
       urls: {
+        pricing: `${base}/pricing`,
+        checkout: `${base}/pricing`,
+        subscription_status: `${base}/api/v1/yantramed/subscription/status`,
+        billing_portal: `${base}/account/billing`,
         account_deletion: `${base}/delete-account/yantramed`,
         course: `${base}/api/v1/yantramed/course`,
         course_day: `${base}/api/v1/yantramed/course/days/{day}`,
@@ -107,6 +122,13 @@ export class YantramedAppService {
         step_2: "GET /api/v1/yantramed/course/days/{day}/music",
         step_3: "Replay the same mantra audio from step 1",
         step_4: "Mark day complete in Firebase (not this API)",
+      },
+      subscription_flow: {
+        step_1: "Sign in with Google in the YantraMed app (Firebase Auth → uid + email)",
+        step_2: "Open checkout URL: GET urls.checkout?email={email}&uid={firebase_uid}",
+        step_3: "Complete Paddle checkout on web (same Google email)",
+        step_4: "Webhook writes subscription to Postgres + Firestore users/{uid}",
+        step_5: "App reads users/{uid}.subscription or polls subscription_status?uid=",
       },
     };
   }

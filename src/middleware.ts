@@ -1,53 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 
-const PUBLIC_PATHS = [
-  "/login",
-  "/delete-account",
-  "/pricing",
-  "/terms",
-  "/privacy",
-  "/refunds",
-  "/welcome",
-  "/account",
-  "/api/webhooks",
-  "/api/v1",
-  "/api/storage",
-  "/api/admin/auth/login",
-];
+/** Only admin login is reachable without a session */
+const ADMIN_PUBLIC_PATHS = new Set(["/api/admin/auth/login"]);
 
-function isPublic(pathname: string) {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
+function isAdminRoute(pathname: string): boolean {
+  return pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+}
+
+function isStaticAsset(pathname: string): boolean {
+  return (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|txt|xml|json)$/i.test(
+      pathname,
+    )
   );
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
+  if (isStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
-  const needsAuth =
-    pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-
-  if (!needsAuth || isPublic(pathname)) {
-    if (pathname === "/login") {
-      const token = request.cookies.get(SESSION_COOKIE)?.value;
-      if (token && (await verifySessionToken(token))) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
+  if (pathname === "/login") {
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    if (token && (await verifySessionToken(token))) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
     return NextResponse.next();
   }
 
-  // Login endpoint stays public
-  if (pathname === "/api/admin/auth/login") {
+  if (!isAdminRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (ADMIN_PUBLIC_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 

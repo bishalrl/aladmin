@@ -23,7 +23,7 @@ function detectCountryCode(headerStore: Headers): string | undefined {
 export default async function PricingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; uid?: string }>;
 }) {
   const params = await searchParams;
   const headerStore = await headers();
@@ -31,6 +31,8 @@ export default async function PricingPage({
   const paddleEnvironment = getPublicPaddleEnvironment();
   const clientToken = requireEnv("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN");
   const successUrl = `${getAppBaseUrl()}/welcome`;
+  const email = params.email?.trim() || undefined;
+  const firebaseUid = params.uid?.trim() || undefined;
 
   return (
     <PricingCheckout
@@ -39,7 +41,8 @@ export default async function PricingPage({
       clientToken={clientToken}
       successUrl={successUrl}
       countryCode={countryCode}
-      customerEmail={params.email?.trim() || undefined}
+      customerEmail={email}
+      firebaseUid={firebaseUid}
     />
   );
 }

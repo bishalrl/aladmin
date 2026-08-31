@@ -23,6 +23,8 @@ type Props = {
   /** ISO country from edge headers; omit to let Paddle auto-detect */
   countryCode?: string;
   customerEmail?: string;
+  /** Firebase Auth UID from Google sign-in in the mobile app */
+  firebaseUid?: string;
 };
 
 export function PricingCheckout({
@@ -32,6 +34,7 @@ export function PricingCheckout({
   successUrl,
   countryCode,
   customerEmail,
+  firebaseUid,
 }: Props) {
   const [interval, setInterval] = useState<BillingInterval>("month");
   const [paddle, setPaddle] = useState<Paddle | null>(null);
@@ -138,6 +141,7 @@ export function PricingCheckout({
         app_slug: "yantramed",
         tier: tierName,
         ...(customerEmail ? { email: customerEmail } : {}),
+        ...(firebaseUid ? { firebase_uid: firebaseUid } : {}),
       },
       settings: {
         displayMode: "overlay",

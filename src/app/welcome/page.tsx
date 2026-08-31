@@ -18,8 +18,9 @@ export default function WelcomePage() {
           You&apos;re subscribed to YantraMed
         </h1>
         <p className="mt-4 text-slate-600">
-          Your payment was successful. Open the YantraMed app and sign in with the
-          same email you used at checkout to access your course.
+          Your payment was successful. Return to the YantraMed app — your subscription
+          is linked to your Google account. Sign in with the same email you used at
+          checkout to unlock the course.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link

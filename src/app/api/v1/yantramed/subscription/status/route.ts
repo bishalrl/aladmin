@@ -10,14 +10,30 @@ export async function GET(request: NextRequest) {
     });
     if (blocked) return blocked;
 
-    const email = request.nextUrl.searchParams.get("email")?.trim().toLowerCase();
-    if (!email) {
-      return fail("email query param required", "VALIDATION_ERROR", 400);
+    const emailParam = request.nextUrl.searchParams.get("email")?.trim().toLowerCase();
+    const uid = request.nextUrl.searchParams.get("uid")?.trim();
+
+    if (!emailParam && !uid) {
+      return fail("email or uid query param required", "VALIDATION_ERROR", 400);
     }
 
-    const access = await paddleFulfillmentService.getAccessForEmail(email);
+    if (uid) {
+      const access = await paddleFulfillmentService.getAccessForFirebaseUid(uid);
+      return ok({
+        email: access.email,
+        firebase_uid: uid,
+        has_access: access.hasAccess,
+        tier: access.tier,
+        subscription_id: access.subscriptionId,
+        status: access.status,
+        customer_id: access.customerId,
+      });
+    }
+
+    const access = await paddleFulfillmentService.getAccessForEmail(emailParam!);
     return ok({
-      email,
+      email: emailParam,
+      firebase_uid: access.firebaseUid,
       has_access: access.hasAccess,
       tier: access.tier,
       subscription_id: access.subscriptionId,

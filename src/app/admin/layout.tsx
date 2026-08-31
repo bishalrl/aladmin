@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminSessionGuard } from "@/components/admin/AdminSessionGuard";
 import { ToastProvider } from "@/components/ui/Toast";
+import { getSession } from "@/lib/auth/session";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -8,11 +11,18 @@ export const metadata: Metadata = {
   description: "Manage Budgeting Sathi and YantraMed from one dashboard",
 };
 
-export default function AdminLayout({
+export const dynamic = "force-dynamic";
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getSession();
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <ToastProvider>
       <div className="flex min-h-screen bg-background">
@@ -25,7 +35,7 @@ export default function AdminLayout({
                   Central Admin Platform
                 </p>
                 <p className="text-xs text-slate-500">
-                  Ads · Course media · Users · Account deletion
+                  Signed in as {session.email} · {session.role.replace("_", " ")}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -44,7 +54,9 @@ export default function AdminLayout({
               </div>
             </div>
           </header>
-          <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
+          <AdminSessionGuard>
+            <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
+          </AdminSessionGuard>
         </div>
       </div>
     </ToastProvider>

@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { App, cert, getApps, initializeApp, ServiceAccount } from "firebase-admin/app";
 import { Auth, getAuth } from "firebase-admin/auth";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
 
 export type FirebaseProjectKey = "budgeting-sathi" | "yantramed";
 
@@ -201,6 +202,11 @@ class FirebaseProjectManager {
   getAuth(key: FirebaseProjectKey): Auth | null {
     const app = this.getApp(key);
     return app ? getAuth(app) : null;
+  }
+
+  getFirestore(key: FirebaseProjectKey): Firestore | null {
+    const app = this.getApp(key);
+    return app ? getFirestore(app) : null;
   }
 
   async checkHealth(

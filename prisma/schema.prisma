@@ -342,16 +342,18 @@ model AccountDeletionRequest {
 
 /// Paddle Billing customer mirror (YantraMed subscriptions)
 model PaddleCustomer {
-  customerId String   @id @map("customer_id")
-  email      String
-  projectId  String?  @map("project_id")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  customerId   String   @id @map("customer_id")
+  email        String
+  firebaseUid  String?  @map("firebase_uid")
+  projectId    String?  @map("project_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   project       Project?             @relation(fields: [projectId], references: [id])
   subscriptions PaddleSubscription[]
 
   @@index([email])
+  @@index([firebaseUid])
   @@map("paddle_customers")
 }
 

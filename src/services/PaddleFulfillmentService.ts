@@ -6,10 +6,12 @@ import {
   tierForPriceId,
   type AccessTier,
 } from "@/lib/paddle/access";
+import { yantramedBillingFirestoreService } from "@/services/YantramedBillingFirestoreService";
 
 type CustomerPayload = {
   id: string;
   email?: string | null;
+  firebaseUid?: string | null;
 };
 
 type SubscriptionItem = {
@@ -61,8 +63,7 @@ function pickPrimaryItem(sub: SubscriptionPayload): {
   productId: string;
 } {
   const item = sub.items?.[0];
-  const priceId =
-    item?.price?.id ?? item?.price_id ?? "unknown";
+  const priceId = item?.price?.id ?? item?.price_id ?? "unknown";
   const productId =
     item?.price?.productId ??
     item?.price?.product_id ??
@@ -95,15 +96,19 @@ export class PaddleFulfillmentService {
   async upsertCustomer(customer: CustomerPayload): Promise<void> {
     if (!customer.id || !customer.email) return;
     const projectId = await this.yantramedProjectId();
+    const firebaseUid = customer.firebaseUid?.trim() || undefined;
+
     await prisma.paddleCustomer.upsert({
       where: { customerId: customer.id },
       create: {
         customerId: customer.id,
         email: customer.email,
+        firebaseUid,
         projectId,
       },
       update: {
         email: customer.email,
+        ...(firebaseUid ? { firebaseUid } : {}),
         projectId,
       },
     });
@@ -135,6 +140,93 @@ export class PaddleFulfillmentService {
         scheduledChangeAt: scheduled.at,
       },
     });
+
+    await this.syncFirestoreForCustomer(customerId);
+  }
+
+  /** Mirror Postgres access state to Firestore users/{uid}. */
+  async syncFirestoreForCustomer(paddleCustomerId: string): Promise<void> {
+    const customer = await prisma.paddleCustomer.findUnique({
+      where: { customerId: paddleCustomerId },
+      include: {
+        subscriptions: { orderBy: { updatedAt: "desc" } },
+      },
+    });
+    if (!customer?.email) return;
+
+    const access = await this.getAccessForEmail(customer.email);
+    const primary = customer.subscriptions[0];
+
+    const firebaseUid = await yantramedBillingFirestoreService.resolveFirebaseUid(
+      customer.email,
+      customer.firebaseUid,
+    );
+    if (!firebaseUid) {
+      console.info(
+        "[paddle] no Firebase UID for customer",
+        paddleCustomerId,
+        "— app can poll subscription/status by email",
+      );
+      return;
+    }
+
+    if (!customer.firebaseUid) {
+      await prisma.paddleCustomer.update({
+        where: { customerId: paddleCustomerId },
+        data: { firebaseUid },
+      });
+    }
+
+    await yantramedBillingFirestoreService.syncSubscription(firebaseUid, {
+      has_access: access.hasAccess,
+      tier: access.tier,
+      status: access.status,
+      subscription_id: access.subscriptionId,
+      customer_id: access.customerId,
+      price_id: primary?.priceId ?? null,
+      product_id: primary?.productId ?? null,
+      email: customer.email,
+    });
+  }
+
+  async recordTransactionPayment(input: {
+    transactionId: string;
+    customerId: string;
+    subscriptionId?: string | null;
+    status: string;
+    email?: string | null;
+    firebaseUid?: string | null;
+    tier?: string | null;
+  }): Promise<void> {
+    if (input.customerId && input.email) {
+      await this.upsertCustomer({
+        id: input.customerId,
+        email: input.email,
+        firebaseUid: input.firebaseUid,
+      });
+    }
+
+    if (input.customerId) {
+      await this.syncFirestoreForCustomer(input.customerId);
+    }
+
+    const email = input.email?.toLowerCase();
+    if (!email || !input.transactionId) return;
+
+    const firebaseUid = await yantramedBillingFirestoreService.resolveFirebaseUid(
+      email,
+      input.firebaseUid,
+    );
+    if (!firebaseUid) return;
+
+    await yantramedBillingFirestoreService.recordPayment(firebaseUid, {
+      id: input.transactionId,
+      status: input.status,
+      subscription_id: input.subscriptionId ?? null,
+      customer_id: input.customerId,
+      tier: input.tier ?? null,
+      email,
+    });
   }
 
   async getAccessForEmail(email: string): Promise<{
@@ -143,6 +235,7 @@ export class PaddleFulfillmentService {
     subscriptionId: string | null;
     status: string | null;
     customerId: string | null;
+    firebaseUid: string | null;
   }> {
     const customer = await prisma.paddleCustomer.findFirst({
       where: { email: email.toLowerCase() },
@@ -160,6 +253,7 @@ export class PaddleFulfillmentService {
         subscriptionId: null,
         status: null,
         customerId: customer?.customerId ?? null,
+        firebaseUid: customer?.firebaseUid ?? null,
       };
     }
 
@@ -181,7 +275,66 @@ export class PaddleFulfillmentService {
       subscriptionId: primary.subscriptionId,
       status: primary.status,
       customerId: customer.customerId,
+      firebaseUid: customer.firebaseUid,
     };
+  }
+
+  async getAccessForFirebaseUid(firebaseUid: string): Promise<{
+    hasAccess: boolean;
+    tier: AccessTier;
+    subscriptionId: string | null;
+    status: string | null;
+    customerId: string | null;
+    email: string | null;
+  }> {
+    const linked = await prisma.paddleCustomer.findFirst({
+      where: { firebaseUid },
+      include: { subscriptions: { orderBy: { updatedAt: "desc" } } },
+    });
+    if (linked?.email) {
+      const access = await this.getAccessForEmail(linked.email);
+      return { ...access, email: linked.email };
+    }
+
+    const auth = (
+      await import("@/lib/firebase/FirebaseProjectManager")
+    ).firebaseProjectManager.getAuth("yantramed");
+    if (!auth) {
+      return {
+        hasAccess: false,
+        tier: null,
+        subscriptionId: null,
+        status: null,
+        customerId: null,
+        email: null,
+      };
+    }
+
+    try {
+      const user = await auth.getUser(firebaseUid);
+      const email = user.email?.toLowerCase();
+      if (!email) {
+        return {
+          hasAccess: false,
+          tier: null,
+          subscriptionId: null,
+          status: null,
+          customerId: null,
+          email: null,
+        };
+      }
+      const access = await this.getAccessForEmail(email);
+      return { ...access, email };
+    } catch {
+      return {
+        hasAccess: false,
+        tier: null,
+        subscriptionId: null,
+        status: null,
+        customerId: null,
+        email: null,
+      };
+    }
   }
 }
 

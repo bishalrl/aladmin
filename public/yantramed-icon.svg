@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="YantraMed">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g fill="none" stroke="#ecfdf5" stroke-width="10" stroke-linecap="round">
+    <circle cx="256" cy="256" r="148"/>
+    <circle cx="256" cy="256" r="98"/>
+    <circle cx="256" cy="256" r="48"/>
+    <path d="M256 108 L256 404"/>
+    <path d="M108 256 L404 256"/>
+    <path d="M151 151 L361 361"/>
+    <path d="M361 151 L151 361"/>
+  </g>
+  <text x="256" y="468" text-anchor="middle" fill="#ecfdf5" font-family="system-ui,sans-serif" font-size="44" font-weight="700">YantraMed</text>
+</svg>

@@ -2,7 +2,9 @@ import { prisma } from "@/lib/db/prisma";
 import { projectService } from "@/services/ProjectService";
 import {
   accessFromSubscription,
+  billingIntervalForPriceId,
   highestTier,
+  planNameForTier,
   tierForPriceId,
   type AccessTier,
 } from "@/lib/paddle/access";
@@ -185,6 +187,10 @@ export class PaddleFulfillmentService {
       customer_id: access.customerId,
       price_id: primary?.priceId ?? null,
       product_id: primary?.productId ?? null,
+      plan_name: planNameForTier(access.tier),
+      billing_interval: primary?.priceId
+        ? billingIntervalForPriceId(primary.priceId)
+        : null,
       email: customer.email,
     });
   }
@@ -225,6 +231,7 @@ export class PaddleFulfillmentService {
       subscription_id: input.subscriptionId ?? null,
       customer_id: input.customerId,
       tier: input.tier ?? null,
+      plan_name: input.tier ?? null,
       email,
     });
   }

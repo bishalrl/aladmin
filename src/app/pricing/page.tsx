@@ -20,19 +20,12 @@ function detectCountryCode(headerStore: Headers): string | undefined {
   return code;
 }
 
-export default async function PricingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ email?: string; uid?: string }>;
-}) {
-  const params = await searchParams;
+export default async function PricingPage() {
   const headerStore = await headers();
   const countryCode = detectCountryCode(headerStore);
   const paddleEnvironment = getPublicPaddleEnvironment();
   const clientToken = requireEnv("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN");
   const successUrl = `${getAppBaseUrl()}/welcome`;
-  const email = params.email?.trim() || undefined;
-  const firebaseUid = params.uid?.trim() || undefined;
 
   return (
     <PricingCheckout
@@ -41,8 +34,7 @@ export default async function PricingPage({
       clientToken={clientToken}
       successUrl={successUrl}
       countryCode={countryCode}
-      customerEmail={email}
-      firebaseUid={firebaseUid}
+      headerSubtitle="View plans and pricing. To subscribe from the mobile app, use Subscribe in YantraMed — it opens a secure payment page."
     />
   );
 }

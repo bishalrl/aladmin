@@ -10,6 +10,8 @@ export type YantramedFirestoreSubscription = {
   customer_id: string | null;
   price_id: string | null;
   product_id: string | null;
+  plan_name: string | null;
+  billing_interval: "month" | "year" | null;
   email: string;
   provider: "paddle";
   updated_at: ReturnType<typeof FieldValue.serverTimestamp>;
@@ -22,8 +24,15 @@ export type YantramedFirestorePayment = {
   subscription_id: string | null;
   customer_id: string | null;
   tier: string | null;
+  plan_name: string | null;
   email: string;
   created_at: ReturnType<typeof FieldValue.serverTimestamp>;
+};
+
+export type YantramedFirestoreProfile = {
+  email: string;
+  display_name?: string | null;
+  photo_url?: string | null;
 };
 
 /** Sync Paddle billing state to Firestore for the YantraMed mobile app. */
@@ -53,6 +62,7 @@ export class YantramedBillingFirestoreService {
   async syncSubscription(
     firebaseUid: string,
     data: Omit<YantramedFirestoreSubscription, "updated_at" | "provider">,
+    profile?: YantramedFirestoreProfile,
   ): Promise<void> {
     const db = this.db();
     if (!db) {
@@ -66,10 +76,14 @@ export class YantramedBillingFirestoreService {
       updated_at: FieldValue.serverTimestamp(),
     };
 
-    await db.collection("users").doc(firebaseUid).set(
-      { subscription: payload },
-      { merge: true },
-    );
+    const doc: Record<string, unknown> = { subscription: payload };
+    if (profile) {
+      doc.email = profile.email;
+      if (profile.display_name != null) doc.display_name = profile.display_name;
+      if (profile.photo_url != null) doc.photo_url = profile.photo_url;
+    }
+
+    await db.collection("users").doc(firebaseUid).set(doc, { merge: true });
   }
 
   async recordPayment(

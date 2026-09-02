@@ -23,8 +23,12 @@ type Props = {
   /** ISO country from edge headers; omit to let Paddle auto-detect */
   countryCode?: string;
   customerEmail?: string;
-  /** Firebase Auth UID from Google sign-in in the mobile app */
+  /** Firebase Auth UID — only set from verified web session on /subscribe */
   firebaseUid?: string;
+  activeNav?: string;
+  initialInterval?: "month" | "year";
+  initialTierName?: string;
+  headerSubtitle?: string;
 };
 
 export function PricingCheckout({
@@ -35,8 +39,12 @@ export function PricingCheckout({
   countryCode,
   customerEmail,
   firebaseUid,
+  activeNav = "/pricing",
+  initialInterval = "month",
+  initialTierName,
+  headerSubtitle,
 }: Props) {
-  const [interval, setInterval] = useState<BillingInterval>("month");
+  const [interval, setInterval] = useState<BillingInterval>(initialInterval);
   const [paddle, setPaddle] = useState<Paddle | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [previews, setPreviews] = useState<TierPreview[]>([]);
@@ -152,17 +160,18 @@ export function PricingCheckout({
   }
 
   return (
-    <PublicSiteShell active="/pricing">
+    <PublicSiteShell active={activeNav}>
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-            Pricing
+            {activeNav === "/subscribe" ? "Subscribe" : "Pricing"}
           </p>
           <h1 className="mt-3 text-4xl font-semibold text-slate-900">
             Choose your YantraMed plan
           </h1>
           <p className="mt-3 text-slate-600">
-            Localized prices from Paddle. Toggle monthly or yearly billing.
+            {headerSubtitle ??
+              "Localized prices from Paddle. Toggle monthly or yearly billing."}
           </p>
         </div>
 
@@ -202,14 +211,14 @@ export function PricingCheckout({
             <div
               key={`${tier.name}-${interval}`}
               className={`flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${
-                tier.highlighted
+                tier.highlighted || tier.name === initialTierName
                   ? "border-teal-600 ring-2 ring-teal-600/20"
                   : "border-slate-200"
               }`}
             >
-              {tier.highlighted ? (
+              {tier.highlighted || tier.name === initialTierName ? (
                 <span className="mb-2 w-fit rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
-                  Most popular
+                  {tier.name === initialTierName ? "Selected" : "Most popular"}
                 </span>
               ) : null}
               <h2 className="text-xl font-semibold">{tier.name}</h2>

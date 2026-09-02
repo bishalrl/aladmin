@@ -56,3 +56,34 @@ export function tierRank(tier: AccessTier): number {
 export function highestTier(a: AccessTier, b: AccessTier): AccessTier {
   return tierRank(a) >= tierRank(b) ? a : b;
 }
+
+export function planNameForTier(tier: AccessTier): string | null {
+  if (tier === "starter") return "Starter";
+  if (tier === "pro") return "Pro";
+  if (tier === "advanced") return "Advanced";
+  return null;
+}
+
+const PRICE_INTERVAL_MAP: Record<string, "month" | "year"> = {};
+
+function registerPriceInterval(envKey: string, interval: "month" | "year") {
+  const id = process.env[envKey]?.trim();
+  if (id) PRICE_INTERVAL_MAP[id] = interval;
+}
+
+function buildPriceIntervalMap() {
+  if (Object.keys(PRICE_INTERVAL_MAP).length > 0) return;
+  registerPriceInterval("PADDLE_PRICE_STARTER_MONTHLY", "month");
+  registerPriceInterval("PADDLE_PRICE_STARTER_YEARLY", "year");
+  registerPriceInterval("PADDLE_PRICE_PRO_MONTHLY", "month");
+  registerPriceInterval("PADDLE_PRICE_PRO_YEARLY", "year");
+  registerPriceInterval("PADDLE_PRICE_ADVANCED_MONTHLY", "month");
+  registerPriceInterval("PADDLE_PRICE_ADVANCED_YEARLY", "year");
+}
+
+export function billingIntervalForPriceId(
+  priceId: string,
+): "month" | "year" | null {
+  buildPriceIntervalMap();
+  return PRICE_INTERVAL_MAP[priceId] ?? null;
+}

@@ -18,7 +18,9 @@ export type YantramedAppInfo = {
   pricing: YantramedPricing;
   urls: {
     pricing: string;
+    subscribe: string;
     checkout: string;
+    payment_url_api: string;
     subscription_status: string;
     billing_portal: string;
     account_deletion: string;
@@ -105,7 +107,9 @@ export class YantramedAppService {
       pricing,
       urls: {
         pricing: `${base}/pricing`,
-        checkout: `${base}/pricing`,
+        subscribe: `${base}/subscribe`,
+        checkout: `${base}/subscribe`,
+        payment_url_api: `${base}/api/v1/yantramed/payment/url`,
         subscription_status: `${base}/api/v1/yantramed/subscription/status`,
         billing_portal: `${base}/account/billing`,
         account_deletion: `${base}/delete-account/yantramed`,
@@ -124,11 +128,11 @@ export class YantramedAppService {
         step_4: "Mark day complete in Firebase (not this API)",
       },
       subscription_flow: {
-        step_1: "Sign in with Google in the YantraMed app (Firebase Auth → uid + email)",
-        step_2: "Open checkout URL: GET urls.checkout?email={email}&uid={firebase_uid}",
-        step_3: "Complete Paddle checkout on web (same Google email)",
-        step_4: "Webhook writes subscription to Postgres + Firestore users/{uid}",
-        step_5: "App reads users/{uid}.subscription or polls subscription_status?uid=",
+        step_1: "App: Firebase Google login for course access (not payment)",
+        step_2: "App: GET /api/v1/yantramed/payment/url with Authorization: Bearer {Firebase ID token}",
+        step_3: "App: open payment_url in system browser",
+        step_4: "Web: Google sign-in on /subscribe + Paddle checkout; webhooks write Firestore users/{uid}",
+        step_5: "App: listen to Firestore users/{uid}.subscription or GET subscription/status?uid=",
       },
     };
   }

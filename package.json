@@ -27,6 +27,7 @@
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
+    "firebase": "^12.18.0",
     "firebase-admin": "^14.2.0",
     "jose": "^6.2.8",
     "nanoid": "^6.0.1",

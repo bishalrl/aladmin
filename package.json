@@ -34,10 +34,11 @@
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -45,7 +46,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "prisma": "^6.19.3",
-    "tailwindcss": "^4",
     "tsx": "^4.23.11",
     "typescript": "^5"
   }

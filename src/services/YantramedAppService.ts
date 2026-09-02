@@ -21,6 +21,8 @@ export type YantramedAppInfo = {
     subscribe: string;
     checkout: string;
     payment_url_api: string;
+    payment_url_api_legacy: string;
+    payment_ping: string;
     subscription_status: string;
     billing_portal: string;
     account_deletion: string;
@@ -109,7 +111,9 @@ export class YantramedAppService {
         pricing: `${base}/pricing`,
         subscribe: `${base}/subscribe`,
         checkout: `${base}/subscribe`,
-        payment_url_api: `${base}/api/v1/yantramed/payment/url`,
+        payment_url_api: `${base}/api/v1/yantramed/payment-url`,
+        payment_url_api_legacy: `${base}/api/v1/yantramed/payment/url`,
+        payment_ping: `${base}/api/v1/yantramed/payment-ping`,
         subscription_status: `${base}/api/v1/yantramed/subscription/status`,
         billing_portal: `${base}/account/billing`,
         account_deletion: `${base}/delete-account/yantramed`,

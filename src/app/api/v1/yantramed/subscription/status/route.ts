@@ -17,29 +17,44 @@ export async function GET(request: NextRequest) {
       return fail("email or uid query param required", "VALIDATION_ERROR", 400);
     }
 
-    if (uid) {
-      const access = await paddleFulfillmentService.getAccessForFirebaseUid(uid);
+    try {
+      if (uid) {
+        const access = await paddleFulfillmentService.getAccessForFirebaseUid(uid);
+        return ok({
+          email: access.email,
+          firebase_uid: uid,
+          has_access: access.hasAccess,
+          tier: access.tier,
+          subscription_id: access.subscriptionId,
+          status: access.status,
+          customer_id: access.customerId,
+        });
+      }
+
+      const access = await paddleFulfillmentService.getAccessForEmail(emailParam!);
       return ok({
-        email: access.email,
-        firebase_uid: uid,
+        email: emailParam,
+        firebase_uid: access.firebaseUid,
         has_access: access.hasAccess,
         tier: access.tier,
         subscription_id: access.subscriptionId,
         status: access.status,
         customer_id: access.customerId,
       });
+    } catch (inner) {
+      // Table missing / Firebase misconfig should not break the app paywall check
+      console.error("[subscription/status]", inner);
+      return ok({
+        email: emailParam ?? null,
+        firebase_uid: uid ?? null,
+        has_access: false,
+        tier: null,
+        subscription_id: null,
+        status: null,
+        customer_id: null,
+        warning: "billing_store_unavailable",
+      });
     }
-
-    const access = await paddleFulfillmentService.getAccessForEmail(emailParam!);
-    return ok({
-      email: emailParam,
-      firebase_uid: access.firebaseUid,
-      has_access: access.hasAccess,
-      tier: access.tier,
-      subscription_id: access.subscriptionId,
-      status: access.status,
-      customer_id: access.customerId,
-    });
   } catch (error) {
     return handleRouteError(error);
   }

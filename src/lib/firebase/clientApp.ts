@@ -1,24 +1,27 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import type { YantramedFirebaseWebConfig } from "@/lib/firebase/clientConfig";
 import { getYantramedFirebaseWebConfig } from "@/lib/firebase/clientConfig";
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
-export function getYantramedFirebaseApp(): FirebaseApp {
+export function getYantramedFirebaseApp(
+  config?: YantramedFirebaseWebConfig,
+): FirebaseApp {
   if (!app) {
-    const config = getYantramedFirebaseWebConfig();
+    const resolved = config ?? getYantramedFirebaseWebConfig();
     const existing = getApps().find((a) => a.name === "yantramed-web");
     app =
       existing ??
       initializeApp(
         {
-          apiKey: config.apiKey,
-          authDomain: config.authDomain,
-          projectId: config.projectId,
-          appId: config.appId,
-          storageBucket: config.storageBucket,
-          messagingSenderId: config.messagingSenderId,
+          apiKey: resolved.apiKey,
+          authDomain: resolved.authDomain,
+          projectId: resolved.projectId,
+          appId: resolved.appId,
+          storageBucket: resolved.storageBucket,
+          messagingSenderId: resolved.messagingSenderId,
         },
         "yantramed-web",
       );
@@ -26,9 +29,11 @@ export function getYantramedFirebaseApp(): FirebaseApp {
   return app;
 }
 
-export function getYantramedFirebaseAuth(): Auth {
+export function getYantramedFirebaseAuth(
+  config?: YantramedFirebaseWebConfig,
+): Auth {
   if (!auth) {
-    auth = getAuth(getYantramedFirebaseApp());
+    auth = getAuth(getYantramedFirebaseApp(config));
   }
   return auth;
 }

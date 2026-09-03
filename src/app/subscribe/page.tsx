@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { SubscribeGate } from "@/components/subscribe/SubscribeGate";
 import { verifyPaymentSessionToken } from "@/lib/auth/paymentSession";
-import { getPublicPaddleEnvironment, getAppBaseUrl, requireEnv } from "@/lib/paddle/config";
+import {
+  getYantramedFirebaseWebConfig,
+  type YantramedFirebaseWebConfig,
+} from "@/lib/firebase/clientConfig";
+import {
+  getPublicPaddleEnvironment,
+  getAppBaseUrl,
+  requireEnv,
+} from "@/lib/paddle/config";
 import { YANTRAMED_TIERS } from "@/lib/paddle/tiers";
 
 export const metadata: Metadata = {
@@ -35,6 +43,17 @@ export default async function SubscribePage({
   const clientToken = requireEnv("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN");
   const successUrl = `${getAppBaseUrl()}/welcome`;
 
+  let firebaseConfig: YantramedFirebaseWebConfig | null = null;
+  let firebaseConfigError: string | null = null;
+  try {
+    firebaseConfig = getYantramedFirebaseWebConfig();
+  } catch (e) {
+    firebaseConfigError =
+      e instanceof Error
+        ? e.message
+        : "Missing Firebase Web config in server .env";
+  }
+
   let paymentSession = null;
   let sessionError: string | null = null;
 
@@ -64,6 +83,8 @@ export default async function SubscribePage({
       countryCode={countryCode}
       paymentSession={paymentSession}
       sessionError={sessionError}
+      firebaseConfig={firebaseConfig}
+      firebaseConfigError={firebaseConfigError}
     />
   );
 }

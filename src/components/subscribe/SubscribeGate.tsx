@@ -9,6 +9,7 @@ import {
   type User,
 } from "firebase/auth";
 import { getYantramedFirebaseAuth } from "@/lib/firebase/clientApp";
+import type { YantramedFirebaseWebConfig } from "@/lib/firebase/clientConfig";
 import { PricingCheckout } from "@/components/pricing/PricingCheckout";
 import type { Tier } from "@/lib/paddle/tiers";
 import { PublicSiteShell } from "@/components/site/PublicSiteShell";
@@ -27,9 +28,11 @@ type Props = {
   clientToken: string;
   successUrl: string;
   countryCode?: string;
-  /** Signed payment session from app (s= query param) */
   paymentSession: VerifiedSession | null;
   sessionError: string | null;
+  /** Loaded on the server from YANTRAMED_FIREBASE_WEB_* / NEXT_PUBLIC_* */
+  firebaseConfig: YantramedFirebaseWebConfig | null;
+  firebaseConfigError: string | null;
 };
 
 export function SubscribeGate({
@@ -40,6 +43,8 @@ export function SubscribeGate({
   countryCode,
   paymentSession,
   sessionError,
+  firebaseConfig,
+  firebaseConfigError,
 }: Props) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -47,21 +52,28 @@ export function SubscribeGate({
   const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
-    let auth;
-    try {
-      auth = getYantramedFirebaseAuth();
-    } catch (e) {
-      setAuthError(e instanceof Error ? e.message : "Firebase not configured");
+    if (firebaseConfigError || !firebaseConfig) {
+      setAuthError(
+        firebaseConfigError ??
+          "Missing Firebase Web config on server. Set YANTRAMED_FIREBASE_WEB_API_KEY, AUTH_DOMAIN, and APP_ID in .env",
+      );
       setAuthReady(true);
       return;
     }
 
-    const unsub = onAuthStateChanged(auth, (next) => {
-      setUser(next);
+    let unsub = () => {};
+    try {
+      const auth = getYantramedFirebaseAuth(firebaseConfig);
+      unsub = onAuthStateChanged(auth, (next) => {
+        setUser(next);
+        setAuthReady(true);
+      });
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : "Firebase not configured");
       setAuthReady(true);
-    });
+    }
     return () => unsub();
-  }, []);
+  }, [firebaseConfig, firebaseConfigError]);
 
   const uidMismatch = useMemo(() => {
     if (!paymentSession || !user) return false;
@@ -69,10 +81,11 @@ export function SubscribeGate({
   }, [paymentSession, user]);
 
   const handleGoogleSignIn = useCallback(async () => {
+    if (!firebaseConfig) return;
     setSigningIn(true);
     setAuthError(null);
     try {
-      const auth = getYantramedFirebaseAuth();
+      const auth = getYantramedFirebaseAuth(firebaseConfig);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       await signInWithPopup(auth, provider);
@@ -81,16 +94,17 @@ export function SubscribeGate({
     } finally {
       setSigningIn(false);
     }
-  }, []);
+  }, [firebaseConfig]);
 
   const handleSignOut = useCallback(async () => {
+    if (!firebaseConfig) return;
     try {
-      const auth = getYantramedFirebaseAuth();
+      const auth = getYantramedFirebaseAuth(firebaseConfig);
       await signOut(auth);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [firebaseConfig]);
 
   if (sessionError) {
     return (

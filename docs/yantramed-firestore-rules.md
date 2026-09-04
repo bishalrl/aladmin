@@ -17,6 +17,11 @@ service cloud.firestore {
         allow write: if false;
       }
     }
+
+    // Complimentary grants — Admin SDK only (never client-writable)
+    match /comp_access/{email} {
+      allow read, write: if false;
+    }
   }
 }
 ```
@@ -54,7 +59,24 @@ users/{firebaseUid}/payments/{transactionId}
   created_at: timestamp
 ```
 
-## Mobile app read example
+## Complimentary / tester access
 
-Listen to `users/{uid}` where `uid` is `FirebaseAuth.instance.currentUser!.uid`.
-Unlock course when `subscription.has_access == true`.
+Grant full Advanced access without Paddle:
+
+```bash
+npx tsx scripts/grant-yantramed-tester.ts tester@gmail.com
+```
+
+Writes:
+- `comp_access/{email}` — source of truth for complimentary grants
+- `users/{uid}.subscription` — if that Google account already signed into the app
+
+Revoke:
+
+```bash
+npx tsx scripts/grant-yantramed-tester.ts tester@gmail.com --revoke
+```
+
+Tester signs into the YantraMed app with that same Gmail → `has_access: true`, `tier: advanced`.
+
+If they have never signed in yet, run the grant script again after their first login so `users/{uid}` is written for Firestore listeners.

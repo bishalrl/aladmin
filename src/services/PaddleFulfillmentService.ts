@@ -9,6 +9,7 @@ import {
   type AccessTier,
 } from "@/lib/paddle/access";
 import { yantramedBillingFirestoreService } from "@/services/YantramedBillingFirestoreService";
+import { yantramedCompAccessService } from "@/services/YantramedCompAccessService";
 
 type CustomerPayload = {
   id: string;
@@ -244,8 +245,24 @@ export class PaddleFulfillmentService {
     customerId: string | null;
     firebaseUid: string | null;
   }> {
+    const normalized = email.toLowerCase();
+
+    // Complimentary / tester grants (no Paddle required)
+    if (await yantramedCompAccessService.isComped(normalized)) {
+      const firebaseUid =
+        await yantramedBillingFirestoreService.resolveFirebaseUid(normalized);
+      return {
+        hasAccess: true,
+        tier: "advanced",
+        subscriptionId: `comp_${normalized}`,
+        status: "active",
+        customerId: null,
+        firebaseUid,
+      };
+    }
+
     const customer = await prisma.paddleCustomer.findFirst({
-      where: { email: email.toLowerCase() },
+      where: { email: normalized },
       include: {
         subscriptions: {
           orderBy: { updatedAt: "desc" },
@@ -294,6 +311,26 @@ export class PaddleFulfillmentService {
     customerId: string | null;
     email: string | null;
   }> {
+    if (await yantramedCompAccessService.isCompedUid(firebaseUid)) {
+      const auth = (
+        await import("@/lib/firebase/FirebaseProjectManager")
+      ).firebaseProjectManager.getAuth("yantramed");
+      let email: string | null = null;
+      try {
+        email = (await auth?.getUser(firebaseUid))?.email?.toLowerCase() ?? null;
+      } catch {
+        email = null;
+      }
+      return {
+        hasAccess: true,
+        tier: "advanced",
+        subscriptionId: email ? `comp_${email}` : "comp",
+        status: "active",
+        customerId: null,
+        email,
+      };
+    }
+
     const linked = await prisma.paddleCustomer.findFirst({
       where: { firebaseUid },
       include: { subscriptions: { orderBy: { updatedAt: "desc" } } },

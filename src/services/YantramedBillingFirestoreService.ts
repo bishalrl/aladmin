@@ -13,7 +13,7 @@ export type YantramedFirestoreSubscription = {
   plan_name: string | null;
   billing_interval: "month" | "year" | null;
   email: string;
-  provider: "paddle";
+  provider: "paddle" | "comp" | "tester";
   updated_at: ReturnType<typeof FieldValue.serverTimestamp>;
 };
 
@@ -61,7 +61,9 @@ export class YantramedBillingFirestoreService {
 
   async syncSubscription(
     firebaseUid: string,
-    data: Omit<YantramedFirestoreSubscription, "updated_at" | "provider">,
+    data: Omit<YantramedFirestoreSubscription, "updated_at"> & {
+      provider?: YantramedFirestoreSubscription["provider"];
+    },
     profile?: YantramedFirestoreProfile,
   ): Promise<void> {
     const db = this.db();
@@ -70,9 +72,10 @@ export class YantramedBillingFirestoreService {
       return;
     }
 
+    const { provider = "paddle", ...rest } = data;
     const payload: YantramedFirestoreSubscription = {
-      ...data,
-      provider: "paddle",
+      ...rest,
+      provider,
       updated_at: FieldValue.serverTimestamp(),
     };
 

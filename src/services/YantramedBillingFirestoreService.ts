@@ -61,7 +61,7 @@ export class YantramedBillingFirestoreService {
 
   async syncSubscription(
     firebaseUid: string,
-    data: Omit<YantramedFirestoreSubscription, "updated_at"> & {
+    data: Omit<YantramedFirestoreSubscription, "updated_at" | "provider"> & {
       provider?: YantramedFirestoreSubscription["provider"];
     },
     profile?: YantramedFirestoreProfile,

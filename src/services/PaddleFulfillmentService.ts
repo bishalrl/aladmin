@@ -193,6 +193,7 @@ export class PaddleFulfillmentService {
         ? billingIntervalForPriceId(primary.priceId)
         : null,
       email: customer.email,
+      provider: "paddle",
     });
   }
 
